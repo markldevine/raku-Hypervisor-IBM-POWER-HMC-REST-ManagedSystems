@@ -55,6 +55,8 @@ has     Str                                         $.RequestedHugePages;
 has     Str                                         $.TemporaryMemoryForLogicalPartitionMobilityInUse;
 has     Str                                         $.DefaultPhysicalPageTableRatio;
 has     Str                                         @.AllowedPhysicalPageTableRatios;
+has     Str                                         $.PermanentSystemMemory;
+has     Str                                         $.CurrentAssignedMemoryToPartitions;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -122,6 +124,9 @@ method load () {
     $!TemporaryMemoryForLogicalPartitionMobilityInUse               = self.etl-text(:TAG<TemporaryMemoryForLogicalPartitionMobilityInUse>,              :$!xml);
     $!DefaultPhysicalPageTableRatio                                 = self.etl-text(:TAG<DefaultPhysicalPageTableRatio>,                                :$!xml);
     @!AllowedPhysicalPageTableRatios                                = self.etl-texts(:TAG<AllowedPhysicalPageTableRatios>,                              :$!xml);
+    $!PermanentSystemMemory                                         = self.etl-text(:TAG<PermanentSystemMemory>,                                        :$!xml);
+    $!CurrentAssignedMemoryToPartitions                             = self.etl-text(:TAG<CurrentAssignedMemoryToPartitions>,                            :$!xml);
+
     $!xml                                                           = Nil;
     $!loaded                                                        = True;
     self;

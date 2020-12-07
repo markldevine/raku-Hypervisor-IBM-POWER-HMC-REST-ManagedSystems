@@ -40,6 +40,7 @@ has     Str                                         $.SharedProcessorPoolCount;
 has     Str                                         @.SupportedPartitionProcessorCompatibilityModes;
 has     Str                                         $.TemporaryProcessorUnitsForLogicalPartitionMobilityInUse;
 has     URI                                         @.SharedProcessorPool;
+has     Str                                         $.PermanentSystemProcessors;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -91,6 +92,7 @@ method load () {
     @!SupportedPartitionProcessorCompatibilityModes                 = self.etl-texts(:TAG<SupportedPartitionProcessorCompatibilityModes>,               :$!xml);
     $!TemporaryProcessorUnitsForLogicalPartitionMobilityInUse       = self.etl-text(:TAG<TemporaryProcessorUnitsForLogicalPartitionMobilityInUse>,      :$!xml);
     @!SharedProcessorPool                                           = self.etl-links-URIs(:xml(self.etl-branch(:TAG<SharedProcessorPool>,               :$!xml)));
+    $!PermanentSystemProcessors                                     = self.etl-text(:TAG<PermanentSystemProcessors>,                                    :$!xml);
     $!xml                                                           = Nil;
     $!loaded                                                        = True;
     self;

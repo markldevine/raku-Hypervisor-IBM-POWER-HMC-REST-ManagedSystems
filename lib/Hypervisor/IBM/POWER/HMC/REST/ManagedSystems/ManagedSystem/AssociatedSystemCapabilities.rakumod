@@ -97,6 +97,8 @@ has     Str                                         $.PlatformMemoryMirroringLic
 has     Str                                         $.PlatformMemoryMirroringCapabilityKnown;
 has     Str                                         $.PartitionSecureBootCapable;
 has     Str                                         $.DedicatedProcessorPartitionCapable;
+has     Str                                         $.PersistentMemoryCapable;
+has     Str                                         $.SRIOVMigrationCapable;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -204,6 +206,8 @@ method load () {
     $!PlatformMemoryMirroringCapabilityKnown                = self.etl-text(:TAG<PlatformMemoryMirroringCapabilityKnown>,                   :$!xml);
     $!PartitionSecureBootCapable                            = self.etl-text(:TAG<PartitionSecureBootCapable>,                               :$!xml);
     $!DedicatedProcessorPartitionCapable                    = self.etl-text(:TAG<DedicatedProcessorPartitionCapable>,                       :$!xml);
+    $!PersistentMemoryCapable                               = self.etl-text(:TAG<PersistentMemoryCapable>,                                  :$!xml);
+    $!SRIOVMigrationCapable                                 = self.etl-text(:TAG<SRIOVMigrationCapable>,                                    :$!xml);
     $!xml                                                   = Nil;
     $!loaded                                                = True;
     self;
