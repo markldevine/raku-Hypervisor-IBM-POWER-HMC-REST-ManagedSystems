@@ -40,7 +40,7 @@ method init () {
     self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     return self             unless $!xml.DEFINITE;
     $!IOSlot                = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot.new(:$!config, :xml(self.etl-branch(:TAG<IOSlot>, :$!xml, :optional)));
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

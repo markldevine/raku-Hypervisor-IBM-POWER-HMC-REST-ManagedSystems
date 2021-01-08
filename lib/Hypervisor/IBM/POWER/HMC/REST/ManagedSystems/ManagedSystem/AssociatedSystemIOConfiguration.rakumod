@@ -54,7 +54,7 @@ method init () {
     $!IOSlots                           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots.new(:$!config, :xml(self.etl-branch(:TAG<IOSlots>, :$!xml)));
     $!SRIOVAdapters                     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters.new(:$!config, :xml(self.etl-branch(:TAG<SRIOVAdapters>, :$!xml)));
     $!AssociatedSystemVirtualNetwork    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::AssociatedSystemVirtualNetwork.new(:$!config, :xml(self.etl-branch(:TAG<AssociatedSystemVirtualNetwork>, :$!xml)));
-    self.load                           if self.config.optimization-init-load;
+    self.load                           if self.config.optimizations.init-load;
     $!initialized                       = True;
     self;
 }

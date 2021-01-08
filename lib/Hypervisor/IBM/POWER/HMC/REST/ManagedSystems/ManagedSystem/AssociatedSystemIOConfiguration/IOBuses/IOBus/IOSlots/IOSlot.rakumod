@@ -66,7 +66,7 @@ method init () {
     $!RelatedIBMiIOSlot     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIBMiIOSlot>, :$!xml, :optional)));
     $!RelatedIOAdapter      = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIOAdapter>, :$!xml, :optional)));
     $!IORDevices            = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::IORDevices.new(:$!config, :xml(self.etl-branch(:TAG<IORDevices>, :$!xml, :optional)));
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

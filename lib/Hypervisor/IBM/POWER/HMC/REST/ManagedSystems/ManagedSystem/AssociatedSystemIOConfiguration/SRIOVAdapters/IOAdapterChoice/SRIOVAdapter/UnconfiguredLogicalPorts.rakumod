@@ -42,7 +42,7 @@ method init () {
     for self.etl-branches(:TAG<SRIOVUnconfiguredLogicalPort>, :$!xml, :optional) -> $sriovulp {
         @!SRIOVUnconfiguredLogicalPort.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::UnconfiguredLogicalPorts::SRIOVUnconfiguredLogicalPort.new(:$!config, :xml($sriovulp));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

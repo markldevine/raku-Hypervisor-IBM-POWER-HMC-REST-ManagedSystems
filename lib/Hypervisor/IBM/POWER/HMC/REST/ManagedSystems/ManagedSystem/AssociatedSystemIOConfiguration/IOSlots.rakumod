@@ -41,7 +41,7 @@ method init () {
     for self.etl-branches(:TAG<IOSlot>, :$!xml) -> $ioslot {
         @!IOSlot.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots::IOSlot.new(:$!config, :xml($ioslot));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

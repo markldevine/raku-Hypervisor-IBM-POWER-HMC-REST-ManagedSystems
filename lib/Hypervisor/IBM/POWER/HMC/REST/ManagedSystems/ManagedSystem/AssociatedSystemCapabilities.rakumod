@@ -118,7 +118,7 @@ submethod TWEAK {
 
 method init () {
     self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     self;
 }
 

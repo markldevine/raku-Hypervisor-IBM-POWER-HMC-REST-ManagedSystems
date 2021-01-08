@@ -39,7 +39,7 @@ method init () {
     return self             if $!initialized;
     self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     $!IOAdapter             = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter::IOAdapter.new(:$!config, :xml(self.etl-branch(:TAG<IOAdapter>, :$!xml, :optional)));
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

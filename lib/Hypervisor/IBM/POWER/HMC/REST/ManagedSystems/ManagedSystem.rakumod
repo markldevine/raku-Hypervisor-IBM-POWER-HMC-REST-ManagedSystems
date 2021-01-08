@@ -153,7 +153,7 @@ method init () {
     $!LogicalPartitions                             = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id));
     $!VirtualIOServers                              = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id));
     $!initialized                                   = True;
-    self.load                                       if self.config.optimization-init-load;
+    self.load                                       if self.config.optimizations.init-load;
     self.config.diag.post:                          sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
     self;
 }

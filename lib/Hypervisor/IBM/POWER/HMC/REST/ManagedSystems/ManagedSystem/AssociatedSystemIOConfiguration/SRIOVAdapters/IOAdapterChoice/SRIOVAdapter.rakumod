@@ -55,7 +55,7 @@ method init () {
     $!ConvergedEthernetPhysicalPorts    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::ConvergedEthernetPhysicalPorts.new(:$!config, :xml(self.etl-branch(:TAG<ConvergedEthernetPhysicalPorts>, :$!xml, :optional)));
     $!EthernetLogicalPorts              = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::EthernetLogicalPorts.new(:$!config, :xml(self.etl-branch(:TAG<EthernetLogicalPorts>, :$!xml, :optional)));
     $!UnconfiguredLogicalPorts          = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::UnconfiguredLogicalPorts.new(:$!config, :xml(self.etl-branch(:TAG<UnconfiguredLogicalPorts>, :$!xml, :optional)));
-    self.load                           if self.config.optimization-init-load;
+    self.load                           if self.config.optimizations.init-load;
     $!initialized                       = True;
     self;
 }

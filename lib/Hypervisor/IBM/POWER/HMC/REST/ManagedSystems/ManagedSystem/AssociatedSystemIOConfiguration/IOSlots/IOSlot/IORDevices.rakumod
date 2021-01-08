@@ -42,7 +42,7 @@ method init () {
     for self.etl-branches(:TAG<IORDevice>, :$!xml, :optional) -> $iord {
         @!IORDevice.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots::IOSlot::IORDevices::IORDevice.new(:$!config, :xml($iord));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

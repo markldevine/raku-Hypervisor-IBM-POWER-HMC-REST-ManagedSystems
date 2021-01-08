@@ -41,7 +41,7 @@ method init () {
     for self.etl-branches(:TAG<IOAdapterChoice>, :$!xml) -> $ioac {
         @!IOAdapterChoice.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice.new(:$!config, :xml($ioac));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

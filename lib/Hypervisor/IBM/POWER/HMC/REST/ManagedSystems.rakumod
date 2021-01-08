@@ -71,7 +71,7 @@ method init () {
     }
     @!Managed-Systems-Names     = %!Managed-System-SystemName-to-Id.keys.sort;
     $!initialized               = True;
-    self.load                   if self.optimization-init-load;
+    self.load                   if self.config.optimizations.init-load;
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
     self;
 }

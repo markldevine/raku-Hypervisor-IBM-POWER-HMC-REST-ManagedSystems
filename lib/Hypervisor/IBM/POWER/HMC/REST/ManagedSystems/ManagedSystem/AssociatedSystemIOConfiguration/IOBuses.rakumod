@@ -41,7 +41,7 @@ method init () {
     for self.etl-branches(:TAG<IOBus>, :$!xml) -> $iobus {
         @!IOBus.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus.new(:$!config, :xml($iobus));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }

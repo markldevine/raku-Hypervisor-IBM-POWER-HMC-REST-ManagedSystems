@@ -46,7 +46,7 @@ method init () {
     self.config.diag.post:          self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     $!DynamicPowerSavingTunables    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<DynamicPowerSavingTunables>, :$!xml)));
     $!IdlePowerSavingTunables       = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<IdlePowerSavingTunables>, :$!xml)));
-    self.load                       if self.config.optimization-init-load;
+    self.load                       if self.config.optimizations.init-load;
     $!initialized                   = True;
     self;
 }

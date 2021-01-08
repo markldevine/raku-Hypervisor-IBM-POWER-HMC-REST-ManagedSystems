@@ -42,7 +42,7 @@ method init () {
     for self.etl-branches(:TAG<SRIOVConvergedNetworkAdapterPhysicalPort>, :$!xml, :optional) -> $sriovcnapp {
         @!SRIOVConvergedNetworkAdapterPhysicalPort.push: Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::ConvergedEthernetPhysicalPorts::SRIOVConvergedNetworkAdapterPhysicalPort.new(:$!config, :xml($sriovcnapp));
     }
-    self.load               if self.config.optimization-init-load;
+    self.load               if self.config.optimizations.init-load;
     $!initialized           = True;
     self;
 }
