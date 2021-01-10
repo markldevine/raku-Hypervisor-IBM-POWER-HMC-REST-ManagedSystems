@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus:api<1>:auth<Mark Devine (mark@markdevine.com)>
@@ -10,18 +11,16 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                                                                                                        $names-checked = False;
-my      Bool                                                                                                                        $analyzed = False;
-my      Lock                                                                                                                        $lock = Lock.new;
-
-has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                   $.config is required;
-has     Bool                                                                                                                        $.initialized = False;
-has     Bool                                                                                                                        $.loaded = False;
-has     Str                                                                                                                         $.BackplanePhysicalLocation;
-has     Str                                                                                                                         $.BusDynamicReconfigurationConnectorIndex;
-has     Str                                                                                                                         $.BusDynamicReconfigurationConnectorName;
-has     Str                                                                                                                         $.IOBusID;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots  $.IOSlots;
+my      Bool                                                                                                                        $names-checked  = False;
+my      Bool                                                                                                                        $analyzed       = False;
+my      Lock                                                                                                                        $lock           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                   $.config        is required;
+has     Bool                                                                                                                        $.initialized   = False;
+has     Str                                                                                                                         $.BackplanePhysicalLocation                 is conditional-initialization-attribute;
+has     Str                                                                                                                         $.BusDynamicReconfigurationConnectorIndex   is conditional-initialization-attribute;
+has     Str                                                                                                                         $.BusDynamicReconfigurationConnectorName    is conditional-initialization-attribute;
+has     Str                                                                                                                         $.IOBusID                                   is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots  $.IOSlots                                   is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -40,24 +39,17 @@ submethod TWEAK {
 }
 
 method init () {
-    return self             if $!initialized;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!IOSlots               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots.new(:$!config, :xml(self.etl-branch(:TAG<IOSlots>, :$!xml, :optional)));
-    self.load               if self.config.optimizations.init-load;
-    $!initialized           = True;
-    self;
-}
-
-method load () {
-    return self                                 if $!loaded;
+    return self                                 if $!initialized;
     self.config.diag.post:                      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!IOSlots.load;
-    $!BackplanePhysicalLocation                 = self.etl-text(:TAG<BackplanePhysicalLocation>,                :$!xml);
-    $!BusDynamicReconfigurationConnectorIndex   = self.etl-text(:TAG<BusDynamicReconfigurationConnectorIndex>,  :$!xml);
-    $!BusDynamicReconfigurationConnectorName    = self.etl-text(:TAG<BusDynamicReconfigurationConnectorName>,   :$!xml);
-    $!IOBusID                                   = self.etl-text(:TAG<IOBusID>,                                  :$!xml);
+    $!BackplanePhysicalLocation                 = self.etl-text(:TAG<BackplanePhysicalLocation>,                :$!xml) if self.attribute-is-accessed(self.^name, 'BackplanePhysicalLocation');
+    $!BusDynamicReconfigurationConnectorIndex   = self.etl-text(:TAG<BusDynamicReconfigurationConnectorIndex>,  :$!xml) if self.attribute-is-accessed(self.^name, 'BusDynamicReconfigurationConnectorIndex');
+    $!BusDynamicReconfigurationConnectorName    = self.etl-text(:TAG<BusDynamicReconfigurationConnectorName>,   :$!xml) if self.attribute-is-accessed(self.^name, 'BusDynamicReconfigurationConnectorName');
+    $!IOBusID                                   = self.etl-text(:TAG<IOBusID>,                                  :$!xml) if self.attribute-is-accessed(self.^name, 'IOBusID');
+    if self.attribute-is-accessed(self.^name, 'IOSlots') {
+        $!IOSlots                               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots.new(:$!config, :xml(self.etl-branch(:TAG<IOSlots>, :$!xml, :optional)));
+    }
     $!xml                                       = Nil;
-    $!loaded                                    = True;
+    $!initialized                               = True;
     self;
 }
 

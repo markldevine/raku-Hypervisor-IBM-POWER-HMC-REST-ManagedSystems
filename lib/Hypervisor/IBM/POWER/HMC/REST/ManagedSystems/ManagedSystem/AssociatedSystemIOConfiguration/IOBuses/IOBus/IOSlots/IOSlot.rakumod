@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter;
@@ -12,37 +13,35 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                                                                                                                                    $names-checked = False;
-my      Bool                                                                                                                                                    $analyzed = False;
-my      Lock                                                                                                                                                    $lock = Lock.new;
-
-has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                                               $.config is required;
-has     Bool                                                                                                                                                    $.initialized = False;
-has     Bool                                                                                                                                                    $.loaded = False;
-has     Str                                                                                                                                                     $.BusGroupingRequired;
-has     Str                                                                                                                                                     $.Description;
-has     Str                                                                                                                                                     @.FeatureCodes;
-has     Str                                                                                                                                                     $.IOUnitPhysicalLocation;
-has     Str                                                                                                                                                     $.PartitionID;
-has     Str                                                                                                                                                     $.PartitionName;
-has     Str                                                                                                                                                     $.PartitionType;
-has     Str                                                                                                                                                     $.PCAdapterID;
-has     Str                                                                                                                                                     $.PCIClass;
-has     Str                                                                                                                                                     $.PCIDeviceID;
-has     Str                                                                                                                                                     $.PCISubsystemDeviceID;
-has     Str                                                                                                                                                     $.PCIManufacturerID;
-has     Str                                                                                                                                                     $.PCIRevisionID;
-has     Str                                                                                                                                                     $.PCIVendorID;
-has     Str                                                                                                                                                     $.PCISubsystemVendorID;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot   $.RelatedIBMiIOSlot;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter    $.RelatedIOAdapter;
-has     Str                                                                                                                                                     $.SlotDynamicReconfigurationConnectorIndex;
-has     Str                                                                                                                                                     $.SlotDynamicReconfigurationConnectorName;
-has     Str                                                                                                                                                     $.SlotPhysicalLocationCode;
-has     Str                                                                                                                                                     $.SRIOVCapableDevice;
-has     Str                                                                                                                                                     $.SRIOVCapableSlot;
-has     Str                                                                                                                                                     $.SRIOVLogicalPortsLimit;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::IORDevices          $.IORDevices;
+my      Bool                                                                                                                                                    $names-checked  = False;
+my      Bool                                                                                                                                                    $analyzed       = False;
+my      Lock                                                                                                                                                    $lock           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                                               $.config        is required;
+has     Bool                                                                                                                                                    $.initialized   = False;
+has     Str                                                                                                                                                     $.BusGroupingRequired                       is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.Description                               is conditional-initialization-attribute;
+has     Str                                                                                                                                                     @.FeatureCodes                              is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.IOUnitPhysicalLocation                    is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PartitionID                               is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PartitionName                             is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PartitionType                             is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCAdapterID                               is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCIClass                                  is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCIDeviceID                               is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCISubsystemDeviceID                      is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCIManufacturerID                         is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCIRevisionID                             is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCIVendorID                               is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.PCISubsystemVendorID                      is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot   $.RelatedIBMiIOSlot                         is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter    $.RelatedIOAdapter                          is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SlotDynamicReconfigurationConnectorIndex  is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SlotDynamicReconfigurationConnectorName   is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SlotPhysicalLocationCode                  is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SRIOVCapableDevice                        is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SRIOVCapableSlot                          is conditional-initialization-attribute;
+has     Str                                                                                                                                                     $.SRIOVLogicalPortsLimit                    is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::IORDevices          $.IORDevices                                is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -61,45 +60,40 @@ submethod TWEAK {
 }
 
 method init () {
-    return self             if $!initialized;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!RelatedIBMiIOSlot     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIBMiIOSlot>, :$!xml, :optional)));
-    $!RelatedIOAdapter      = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIOAdapter>, :$!xml, :optional)));
-    $!IORDevices            = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::IORDevices.new(:$!config, :xml(self.etl-branch(:TAG<IORDevices>, :$!xml, :optional)));
-    self.load               if self.config.optimizations.init-load;
-    $!initialized           = True;
-    self;
-}
-
-method load () {
-    return self                                 if $!loaded;
+    return self                                 if $!initialized;
     self.config.diag.post:                      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!RelatedIBMiIOSlot.load                    if $!RelatedIBMiIOSlot.DEFINITE;
-    $!RelatedIOAdapter.load                     if $!RelatedIOAdapter.DEFINITE;
-    $!IORDevices.load                           if $!IORDevices.DEFINITE;
-    $!BusGroupingRequired                       = self.etl-text(:TAG<BusGroupingRequired>,                      :$!xml, :optional);
-    $!Description                               = self.etl-text(:TAG<Description>,                              :$!xml, :optional);
-    @!FeatureCodes                              = self.etl-texts(:TAG<FeatureCodes>,                            :$!xml, :optional);
-    $!IOUnitPhysicalLocation                    = self.etl-text(:TAG<IOUnitPhysicalLocation>,                   :$!xml, :optional);
-    $!PartitionID                               = self.etl-text(:TAG<PartitionID>,                              :$!xml, :optional);
-    $!PartitionName                             = self.etl-text(:TAG<PartitionName>,                            :$!xml, :optional);
-    $!PartitionType                             = self.etl-text(:TAG<PartitionType>,                            :$!xml, :optional);
-    $!PCAdapterID                               = self.etl-text(:TAG<PCAdapterID>,                              :$!xml, :optional);
-    $!PCIClass                                  = self.etl-text(:TAG<PCIClass>,                                 :$!xml, :optional);
-    $!PCIDeviceID                               = self.etl-text(:TAG<PCIDeviceID>,                              :$!xml, :optional);
-    $!PCISubsystemDeviceID                      = self.etl-text(:TAG<PCISubsystemDeviceID>,                     :$!xml, :optional);
-    $!PCIManufacturerID                         = self.etl-text(:TAG<PCIManufacturerID>,                        :$!xml, :optional);
-    $!PCIRevisionID                             = self.etl-text(:TAG<PCIRevisionID>,                            :$!xml, :optional);
-    $!PCIVendorID                               = self.etl-text(:TAG<PCIVendorID>,                              :$!xml, :optional);
-    $!PCISubsystemVendorID                      = self.etl-text(:TAG<PCISubsystemVendorID>,                     :$!xml, :optional);
-    $!SlotDynamicReconfigurationConnectorIndex  = self.etl-text(:TAG<SlotDynamicReconfigurationConnectorIndex>, :$!xml, :optional);
-    $!SlotDynamicReconfigurationConnectorName   = self.etl-text(:TAG<SlotDynamicReconfigurationConnectorName>,  :$!xml, :optional);
-    $!SlotPhysicalLocationCode                  = self.etl-text(:TAG<SlotPhysicalLocationCode>,                 :$!xml, :optional);
-    $!SRIOVCapableDevice                        = self.etl-text(:TAG<SRIOVCapableDevice>,                       :$!xml, :optional);
-    $!SRIOVCapableSlot                          = self.etl-text(:TAG<SRIOVCapableSlot>,                         :$!xml, :optional);
-    $!SRIOVLogicalPortsLimit                    = self.etl-text(:TAG<SRIOVLogicalPortsLimit>,                   :$!xml, :optional);
+    $!BusGroupingRequired                       = self.etl-text(:TAG<BusGroupingRequired>,                      :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'BusGroupingRequired');
+    $!Description                               = self.etl-text(:TAG<Description>,                              :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'Description');
+    @!FeatureCodes                              = self.etl-texts(:TAG<FeatureCodes>,                            :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'FeatureCodes');
+    $!IOUnitPhysicalLocation                    = self.etl-text(:TAG<IOUnitPhysicalLocation>,                   :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'IOUnitPhysicalLocation');
+    $!PartitionID                               = self.etl-text(:TAG<PartitionID>,                              :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PartitionID');
+    $!PartitionName                             = self.etl-text(:TAG<PartitionName>,                            :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PartitionName');
+    $!PartitionType                             = self.etl-text(:TAG<PartitionType>,                            :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PartitionType');
+    $!PCAdapterID                               = self.etl-text(:TAG<PCAdapterID>,                              :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCAdapterID');
+    $!PCIClass                                  = self.etl-text(:TAG<PCIClass>,                                 :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCIClass');
+    $!PCIDeviceID                               = self.etl-text(:TAG<PCIDeviceID>,                              :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCIDeviceID');
+    $!PCISubsystemDeviceID                      = self.etl-text(:TAG<PCISubsystemDeviceID>,                     :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCISubsystemDeviceID');
+    $!PCIManufacturerID                         = self.etl-text(:TAG<PCIManufacturerID>,                        :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCIManufacturerID');
+    $!PCIRevisionID                             = self.etl-text(:TAG<PCIRevisionID>,                            :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCIRevisionID');
+    $!PCIVendorID                               = self.etl-text(:TAG<PCIVendorID>,                              :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCIVendorID');
+    $!PCISubsystemVendorID                      = self.etl-text(:TAG<PCISubsystemVendorID>,                     :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'PCISubsystemVendorID');
+    if self.attribute-is-accessed(self.^name, 'RelatedIBMiIOSlot') {
+        $!RelatedIBMiIOSlot                     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIBMiIOSlot.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIBMiIOSlot>, :$!xml, :optional)));
+    }
+    if self.attribute-is-accessed(self.^name, 'RelatedIOAdapter') {
+        $!RelatedIOAdapter                      = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::RelatedIOAdapter.new(:$!config, :xml(self.etl-branch(:TAG<RelatedIOAdapter>, :$!xml, :optional)));
+    }
+    $!SlotDynamicReconfigurationConnectorIndex  = self.etl-text(:TAG<SlotDynamicReconfigurationConnectorIndex>, :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SlotDynamicReconfigurationConnectorIndex');
+    $!SlotDynamicReconfigurationConnectorName   = self.etl-text(:TAG<SlotDynamicReconfigurationConnectorName>,  :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SlotDynamicReconfigurationConnectorName');
+    $!SlotPhysicalLocationCode                  = self.etl-text(:TAG<SlotPhysicalLocationCode>,                 :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SlotPhysicalLocationCode');
+    $!SRIOVCapableDevice                        = self.etl-text(:TAG<SRIOVCapableDevice>,                       :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SRIOVCapableDevice');
+    $!SRIOVCapableSlot                          = self.etl-text(:TAG<SRIOVCapableSlot>,                         :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SRIOVCapableSlot');
+    $!SRIOVLogicalPortsLimit                    = self.etl-text(:TAG<SRIOVLogicalPortsLimit>,                   :$!xml, :optional) if self.attribute-is-accessed(self.^name, 'SRIOVLogicalPortsLimit');
+    if self.attribute-is-accessed(self.^name, 'IORDevices') {
+        $!IORDevices                            = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses::IOBus::IOSlots::IOSlot::IORDevices.new(:$!config, :xml(self.etl-branch(:TAG<IORDevices>, :$!xml, :optional)));
+    }
     $!xml                                       = Nil;
-    $!loaded                                    = True;
+    $!initialized                               = True;
     self;
 }
 
