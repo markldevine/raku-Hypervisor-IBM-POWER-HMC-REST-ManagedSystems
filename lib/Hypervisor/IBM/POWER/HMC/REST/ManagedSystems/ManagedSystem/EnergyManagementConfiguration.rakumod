@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables;
@@ -11,19 +12,18 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                                                                                                        $names-checked = False;
-my      Bool                                                                                                                        $analyzed = False;
-my      Lock                                                                                                                        $lock = Lock.new;
+my      Bool                                                                                                                        $names-checked  = False;
+my      Bool                                                                                                                        $analyzed       = False;
+my      Lock                                                                                                                        $lock           = Lock.new;
 
-has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                   $.config is required;
-has     Bool                                                                                                                        $.initialized = False;
-has     Bool                                                                                                                        $.loaded = False;
-has     Str                                                                                                                         $.CurrentPowerSavingMode;
-has     Str                                                                                                                         $.RequiredPowerSavingMode;
-has     Str                                                                                                                         @.SupportedPowerSavingModeTypes;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables $.DynamicPowerSavingTunables;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables    $.IdlePowerSavingTunables;
-has     Str                                                                                                                         $.IdlePowerSaverMode;
+has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                   $.config        is required;
+has     Bool                                                                                                                        $.initialized   = False;
+has     Str                                                                                                                         $.CurrentPowerSavingMode        is conditional-initialization-attribute;
+has     Str                                                                                                                         $.RequiredPowerSavingMode       is conditional-initialization-attribute;
+has     Str                                                                                                                         @.SupportedPowerSavingModeTypes is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables $.DynamicPowerSavingTunables    is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables    $.IdlePowerSavingTunables       is conditional-initialization-attribute;
+has     Str                                                                                                                         $.IdlePowerSaverMode            is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -42,26 +42,20 @@ submethod TWEAK {
 }
 
 method init () {
-    return self                     if $!initialized;
-    self.config.diag.post:          self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!DynamicPowerSavingTunables    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<DynamicPowerSavingTunables>, :$!xml)));
-    $!IdlePowerSavingTunables       = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<IdlePowerSavingTunables>, :$!xml)));
-    self.load                       if self.config.optimizations.init-load;
-    $!initialized                   = True;
-    self;
-}
-
-method load () {
-    return self                     if $!loaded;
-    self.config.diag.post:          self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!DynamicPowerSavingTunables.load;
-    $!IdlePowerSavingTunables.load;
-    $!CurrentPowerSavingMode        = self.etl-text(:TAG<CurrentPowerSavingMode>,           :$!xml);
-    $!RequiredPowerSavingMode       = self.etl-text(:TAG<RequiredPowerSavingMode>,          :$!xml);
-    @!SupportedPowerSavingModeTypes = self.etl-texts(:TAG<SupportedPowerSavingModeTypes>,   :$!xml);
-    $!IdlePowerSaverMode            = self.etl-text(:TAG<IdlePowerSaverMode>,               :$!xml, :optional);
-    $!xml                           = Nil;
-    $!loaded                        = True;
+    return self                         if $!initialized;
+    self.config.diag.post:              self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    if self.attribute-is-accessed(self.^name, 'DynamicPowerSavingTunables') {
+        $!DynamicPowerSavingTunables    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<DynamicPowerSavingTunables>, :$!xml)));
+    }
+    if self.attribute-is-accessed(self.^name, 'IdlePowerSavingTunables') {
+        $!IdlePowerSavingTunables       = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables.new(:$!config, :xml(self.etl-branch(:TAG<IdlePowerSavingTunables>, :$!xml)));
+    }
+    $!CurrentPowerSavingMode            = self.etl-text(:TAG<CurrentPowerSavingMode>,           :$!xml)             if self.attribute-is-accessed(self.^name, 'CurrentPowerSavingMode');
+    $!RequiredPowerSavingMode           = self.etl-text(:TAG<RequiredPowerSavingMode>,          :$!xml)             if self.attribute-is-accessed(self.^name, 'RequiredPowerSavingMode');
+    @!SupportedPowerSavingModeTypes     = self.etl-texts(:TAG<SupportedPowerSavingModeTypes>,   :$!xml)             if self.attribute-is-accessed(self.^name, 'SupportedPowerSavingModeTypes');
+    $!IdlePowerSaverMode                = self.etl-text(:TAG<IdlePowerSaverMode>,               :$!xml, :optional)  if self.attribute-is-accessed(self.^name, 'IdlePowerSaverMode');
+    $!xml                               = Nil;
+    $!initialized                       = True;
     self;
 }
 
