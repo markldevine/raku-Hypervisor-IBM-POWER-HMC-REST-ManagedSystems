@@ -3,6 +3,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities;
@@ -16,7 +17,6 @@ need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::Energy
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers;
 use     URI;
-use     LibXML;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem:api<1>:auth<Mark Devine (mark@markdevine.com)>
             does Hypervisor::IBM::POWER::HMC::REST::Config::Analyze
             does Hypervisor::IBM::POWER::HMC::REST::Config::Dump
@@ -27,74 +27,61 @@ my      Bool                                                                    
 my      Bool                                                                                                        $analyzed = False;
 my      Lock                                                                                                        $lock = Lock.new;
 
-has     Hypervisor::IBM::POWER::HMC::REST::Atom                                                                     $.atom;
+has     Hypervisor::IBM::POWER::HMC::REST::Atom                                                                     $.atom                                          is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                   $.config is required;
-has     Bool                                                                                                        $.loaded = False;
+#has     Bool                                                                                                        $.loaded = False;
 has     Bool                                                                                                        $.initialized = False;
-has     Str                                                                                                         $.id;
-has     DateTime                                                                                                    $.published;
-has     Str                                                                                                         $.ActivatedLevel;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration                $.AssociatedIPLConfiguration;
-has     URI                                                                                                         @.AssociatedLogicalPartitions;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities              $.AssociatedSystemCapabilities;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration           $.AssociatedSystemIOConfiguration;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemMemoryConfiguration       $.AssociatedSystemMemoryConfiguration;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemProcessorConfiguration    $.AssociatedSystemProcessorConfiguration;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemSecurity                  $.AssociatedSystemSecurity;
-has     URI                                                                                                         @.AssociatedVirtualIOServers;
-has     Str                                                                                                         $.DetailedState;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::MachineTypeModelAndSerialNumber           $.MachineTypeModelAndSerialNumber;
-has     Str                                                                                                         $.ManufacturingDefaultConfigurationEnabled;
-has     Str                                                                                                         $.MaximumPartitions;
-has     Str                                                                                                         $.MaximumPowerControlPartitions;
-has     Str                                                                                                         $.MaximumRemoteRestartPartitions;
-has     Str                                                                                                         $.MaximumSharedProcessorCapablePartitionID;
-has     Str                                                                                                         $.MaximumSuspendablePartitions;
-has     Str                                                                                                         $.MaximumBackingDevicesPerVNIC;
-has     Str                                                                                                         $.PhysicalSystemAttentionLEDState;
-has     Str                                                                                                         $.PrimaryIPAddress;
-has     Str                                                                                                         $.Hostname;
-has     Str                                                                                                         $.ServiceProcessorFailoverEnabled;
-has     Str                                                                                                         $.ServiceProcessorFailoverReason;
-has     Str                                                                                                         $.ServiceProcessorFailoverState;
-has     Str                                                                                                         $.ServiceProcessorVersion;
-has     Str                                                                                                         $.State;
-has     Str                                                                                                         $.SystemName;
-has     DateTime                                                                                                    $.SystemTime;
-has     Str                                                                                                         $.VirtualSystemAttentionLEDState;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation                $.SystemMigrationInformation;
-has     Str                                                                                                         $.ReferenceCode;
-has     Str                                                                                                         $.MergedReferenceCode;
-has     Str                                                                                                         $.SystemFirmware;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration             $.EnergyManagementConfiguration;
-has     Str                                                                                                         $.IsPowerVMManagementMaster;
-has     Str                                                                                                         $.IsClassicHMCManagement;
-has     Str                                                                                                         $.IsPowerVMManagementWithoutMaster;
-has     Str                                                                                                         $.IsManagementPartitionPowerVMManagementMaster;
-has     Str                                                                                                         $.IsHMCPowerVMManagementMaster;
-has     Str                                                                                                         $.IsNotPowerVMManagementMaster;
-has     Str                                                                                                         $.IsPowerVMManagementNormalMaster;
-has     Str                                                                                                         $.IsPowerVMManagementPersistentMaster;
-has     Str                                                                                                         $.IsPowerVMManagementTemporaryMaster;
-has     Str                                                                                                         $.IsPowerVMManagementPartitionEnabled;
-has     Str                                                                                                         $.SystemType;
-has     Str                                                                                                         $.ProcessorThrottling;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions                         $.LogicalPartitions;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers                          $.VirtualIOServers;
 
-has     LibXML::Element                                                                                             $!xml-content;
-has     LibXML::Element                                                                                             $!xml-ManagedSystem;
-has     LibXML::Element                                                                                             $!xml-AssociatedIPLConfiguration;
-has     LibXML::Element                                                                                             $!xml-AssociatedLogicalPartitions;
-has     LibXML::Element                                                                                             $!xml-AssociatedSystemCapabilities;
-has     LibXML::Element                                                                                             $!xml-AssociatedSystemIOConfiguration;
-has     LibXML::Element                                                                                             $!xml-AssociatedSystemMemoryConfiguration;
-has     LibXML::Element                                                                                             $!xml-AssociatedSystemProcessorConfiguration;
-has     LibXML::Element                                                                                             $!xml-AssociatedSystemSecurity;
-has     LibXML::Element                                                                                             $!xml-AssociatedVirtualIOServers;
-has     LibXML::Element                                                                                             $!xml-MachineTypeModelAndSerialNumber;
-has     LibXML::Element                                                                                             $!xml-SystemMigrationInformation;
-has     LibXML::Element                                                                                             $!xml-EnergyManagementConfiguration;
+has     Str                                                                                                         $.id;                                                                                       # used in parent class as part of instantiation
+has     DateTime                                                                                                    $.published                                     is conditional-initialization-attribute;
+has     Str                                                                                                         $.ActivatedLevel                                is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration                $.AssociatedIPLConfiguration                    is conditional-initialization-attribute;
+has     URI                                                                                                         @.AssociatedLogicalPartitions                   is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities              $.AssociatedSystemCapabilities                  is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration           $.AssociatedSystemIOConfiguration               is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemMemoryConfiguration       $.AssociatedSystemMemoryConfiguration           is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemProcessorConfiguration    $.AssociatedSystemProcessorConfiguration        is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemSecurity                  $.AssociatedSystemSecurity                      is conditional-initialization-attribute;
+has     URI                                                                                                         @.AssociatedVirtualIOServers                    is conditional-initialization-attribute;
+has     Str                                                                                                         $.DetailedState                                 is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::MachineTypeModelAndSerialNumber           $.MachineTypeModelAndSerialNumber               is conditional-initialization-attribute;
+has     Str                                                                                                         $.ManufacturingDefaultConfigurationEnabled      is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumPartitions                             is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumPowerControlPartitions                 is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumRemoteRestartPartitions                is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumSharedProcessorCapablePartitionID      is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumSuspendablePartitions                  is conditional-initialization-attribute;
+has     Str                                                                                                         $.MaximumBackingDevicesPerVNIC                  is conditional-initialization-attribute;
+has     Str                                                                                                         $.PhysicalSystemAttentionLEDState               is conditional-initialization-attribute;
+has     Str                                                                                                         $.PrimaryIPAddress                              is conditional-initialization-attribute;
+has     Str                                                                                                         $.Hostname                                      is conditional-initialization-attribute;
+has     Str                                                                                                         $.ServiceProcessorFailoverEnabled               is conditional-initialization-attribute;
+has     Str                                                                                                         $.ServiceProcessorFailoverReason                is conditional-initialization-attribute;
+has     Str                                                                                                         $.ServiceProcessorFailoverState                 is conditional-initialization-attribute;
+has     Str                                                                                                         $.ServiceProcessorVersion                       is conditional-initialization-attribute;
+has     Str                                                                                                         $.State                                         is conditional-initialization-attribute;
+has     Str                                                                                                         $.SystemName;                                                                               # used in parent class as part of instantiation
+has     DateTime                                                                                                    $.SystemTime                                    is conditional-initialization-attribute;
+has     Str                                                                                                         $.VirtualSystemAttentionLEDState                is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation                $.SystemMigrationInformation                    is conditional-initialization-attribute;
+has     Str                                                                                                         $.ReferenceCode                                 is conditional-initialization-attribute;
+has     Str                                                                                                         $.MergedReferenceCode                           is conditional-initialization-attribute;
+has     Str                                                                                                         $.SystemFirmware                                is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration             $.EnergyManagementConfiguration                 is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementMaster                     is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsClassicHMCManagement                        is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementWithoutMaster              is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsManagementPartitionPowerVMManagementMaster  is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsHMCPowerVMManagementMaster                  is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsNotPowerVMManagementMaster                  is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementNormalMaster               is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementPersistentMaster           is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementTemporaryMaster            is conditional-initialization-attribute;
+has     Str                                                                                                         $.IsPowerVMManagementPartitionEnabled           is conditional-initialization-attribute;
+has     Str                                                                                                         $.SystemType                                    is conditional-initialization-attribute;
+has     Str                                                                                                         $.ProcessorThrottling                           is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions                         $.LogicalPartitions                             is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers                          $.VirtualIOServers                              is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata author content etag:etag link title>; }
 
@@ -113,107 +100,99 @@ submethod TWEAK {
     self;
 }
 
-#%%% <<<Update mechanism>>>
-#method init (LibXML::Element $xml?) {
-#    with $xml {
-#        $!xml = $xml;
-#        $!loaded = False;
-#    }
 method init () {
-    return self                                     if $!initialized;
-    self.config.diag.post:                          self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    my $init-start                                  = now;
-    $!xml-content                                   = self.etl-branch(:TAG<content>,                                :$!xml);
-    $!xml-ManagedSystem                             = self.etl-branch(:TAG<ManagedSystem:ManagedSystem>,            :xml($!xml-content));
-
-    $!id                                            = self.etl-text(:TAG<id>,                                       :$!xml);                    # used in parent class as part of instantiation
-    $!SystemName                                    = self.etl-text(:TAG<SystemName>,                               :xml($!xml-ManagedSystem)); # used in parent class as part of instantiation
-    $!atom                                          = self.etl-atom(:xml(self.etl-branch(:TAG<Metadata>,            :xml($!xml-ManagedSystem))));
-
-    $!xml-AssociatedIPLConfiguration                = self.etl-branch(:TAG<AssociatedIPLConfiguration>,             :xml($!xml-ManagedSystem));
-    $!xml-AssociatedLogicalPartitions               = self.etl-branch(:TAG<AssociatedLogicalPartitions>,            :xml($!xml-ManagedSystem));
-    $!xml-AssociatedSystemCapabilities              = self.etl-branch(:TAG<AssociatedSystemCapabilities>,           :xml($!xml-ManagedSystem));
-    $!xml-AssociatedSystemIOConfiguration           = self.etl-branch(:TAG<AssociatedSystemIOConfiguration>,        :xml($!xml-ManagedSystem));
-    $!xml-AssociatedSystemMemoryConfiguration       = self.etl-branch(:TAG<AssociatedSystemMemoryConfiguration>,    :xml($!xml-ManagedSystem));
-    $!xml-AssociatedSystemProcessorConfiguration    = self.etl-branch(:TAG<AssociatedSystemProcessorConfiguration>, :xml($!xml-ManagedSystem));
-    $!xml-AssociatedSystemSecurity                  = self.etl-branch(:TAG<AssociatedSystemSecurity>,               :xml($!xml-ManagedSystem));
-    $!xml-AssociatedVirtualIOServers                = self.etl-branch(:TAG<AssociatedVirtualIOServers>,             :xml($!xml-ManagedSystem));
-    $!xml-MachineTypeModelAndSerialNumber           = self.etl-branch(:TAG<MachineTypeModelAndSerialNumber>,        :xml($!xml-ManagedSystem));
-    $!xml-SystemMigrationInformation                = self.etl-branch(:TAG<SystemMigrationInformation>,             :xml($!xml-ManagedSystem));
-    $!xml-EnergyManagementConfiguration             = self.etl-branch(:TAG<EnergyManagementConfiguration>,          :xml($!xml-ManagedSystem));
-    $!AssociatedIPLConfiguration                    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration.new(:$!config, :xml($!xml-AssociatedIPLConfiguration));
-    $!AssociatedSystemCapabilities                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities.new(:$!config, :xml($!xml-AssociatedSystemCapabilities));
-    $!AssociatedSystemIOConfiguration               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration.new(:$!config, :xml($!xml-AssociatedSystemIOConfiguration));
-    $!AssociatedSystemMemoryConfiguration           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemMemoryConfiguration.new(:$!config, :xml($!xml-AssociatedSystemMemoryConfiguration));
-    $!AssociatedSystemProcessorConfiguration        = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemProcessorConfiguration.new(:$!config, :xml($!xml-AssociatedSystemProcessorConfiguration));
-    $!AssociatedSystemSecurity                      = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemSecurity.new(:$!config, :xml($!xml-AssociatedSystemSecurity));
-    $!MachineTypeModelAndSerialNumber               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::MachineTypeModelAndSerialNumber.new(:$!config, :xml($!xml-MachineTypeModelAndSerialNumber));
-    $!SystemMigrationInformation                    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation.new(:$!config, :xml($!xml-SystemMigrationInformation));
-    $!EnergyManagementConfiguration                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration.new(:$!config, :xml($!xml-EnergyManagementConfiguration));
-    $!LogicalPartitions                             = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id));
-    $!VirtualIOServers                              = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id));
-    $!initialized                                   = True;
-    self.load                                       if self.config.optimizations.init-load;
-    self.config.diag.post:                          sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
-    self;
-}
-
-method load () {
-    return self                                     if $!loaded;
-    self.init                                       unless $!initialized;
-    self.config.diag.post:                          self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    my $load-start                                  = now;
-    $!AssociatedIPLConfiguration.load;
-    $!AssociatedSystemCapabilities.load;
-    $!AssociatedSystemIOConfiguration.load;
-    $!AssociatedSystemMemoryConfiguration.load;
-    $!AssociatedSystemProcessorConfiguration.load;
-    $!AssociatedSystemSecurity.load;
-    $!MachineTypeModelAndSerialNumber.load;
-    $!SystemMigrationInformation.load;
-    $!EnergyManagementConfiguration.load;
-#   $!LogicalPartitions.load;
-#   $!VirtualIOServers.load;
-    $!published                                     = DateTime.new(self.etl-text(:TAG<published>,                       :$!xml));
-    $!ActivatedLevel                                = self.etl-text(:TAG<ActivatedLevel>,                               :xml($!xml-ManagedSystem));
-    @!AssociatedLogicalPartitions                   = self.etl-links-URIs(                                              :xml($!xml-AssociatedLogicalPartitions));
-    @!AssociatedVirtualIOServers                    = self.etl-links-URIs(                                              :xml($!xml-AssociatedVirtualIOServers));
-    $!DetailedState                                 = self.etl-text(:TAG<DetailedState>,                                :xml($!xml-ManagedSystem));
-    $!ManufacturingDefaultConfigurationEnabled      = self.etl-text(:TAG<ManufacturingDefaultConfigurationEnabled>,     :xml($!xml-ManagedSystem));
-    $!MaximumPartitions                             = self.etl-text(:TAG<MaximumPartitions>,                            :xml($!xml-ManagedSystem));
-    $!MaximumPowerControlPartitions                 = self.etl-text(:TAG<MaximumPowerControlPartitions>,                :xml($!xml-ManagedSystem));
-    $!MaximumRemoteRestartPartitions                = self.etl-text(:TAG<MaximumRemoteRestartPartitions>,               :xml($!xml-ManagedSystem));
-    $!MaximumSharedProcessorCapablePartitionID      = self.etl-text(:TAG<MaximumSharedProcessorCapablePartitionID>,     :xml($!xml-ManagedSystem));
-    $!MaximumSuspendablePartitions                  = self.etl-text(:TAG<MaximumSuspendablePartitions>,                 :xml($!xml-ManagedSystem));
-    $!MaximumBackingDevicesPerVNIC                  = self.etl-text(:TAG<MaximumBackingDevicesPerVNIC>,                 :xml($!xml-ManagedSystem));
-    $!PhysicalSystemAttentionLEDState               = self.etl-text(:TAG<PhysicalSystemAttentionLEDState>,              :xml($!xml-ManagedSystem));
-    $!PrimaryIPAddress                              = self.etl-text(:TAG<PrimaryIPAddress>,                             :xml($!xml-ManagedSystem));
-    $!Hostname                                      = self.etl-text(:TAG<Hostname>,                                     :xml($!xml-ManagedSystem));
-    $!ServiceProcessorFailoverEnabled               = self.etl-text(:TAG<ServiceProcessorFailoverEnabled>,              :xml($!xml-ManagedSystem));
-    $!ServiceProcessorFailoverReason                = self.etl-text(:TAG<ServiceProcessorFailoverReason>,               :xml($!xml-ManagedSystem));
-    $!ServiceProcessorFailoverState                 = self.etl-text(:TAG<ServiceProcessorFailoverState>,                :xml($!xml-ManagedSystem));
-    $!ServiceProcessorVersion                       = self.etl-text(:TAG<ServiceProcessorVersion>,                      :xml($!xml-ManagedSystem));
-    $!State                                         = self.etl-text(:TAG<State>,                                        :xml($!xml-ManagedSystem));
-    $!SystemTime                                    = DateTime.new(self.etl-text(:TAG<SystemTime>,                      :xml($!xml-ManagedSystem)).subst(/^(\d**10)(\d**3)$/, {$0 ~ '.' ~ $1}).Num);
-    $!VirtualSystemAttentionLEDState                = self.etl-text(:TAG<VirtualSystemAttentionLEDState>,               :xml($!xml-ManagedSystem));
-    $!ReferenceCode                                 = self.etl-text(:TAG<ReferenceCode>,                                :xml($!xml-ManagedSystem));
-    $!MergedReferenceCode                           = self.etl-text(:TAG<MergedReferenceCode>,                          :xml($!xml-ManagedSystem));
-    $!SystemFirmware                                = self.etl-text(:TAG<SystemFirmware>,                               :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementMaster                     = self.etl-text(:TAG<IsPowerVMManagementMaster>,                    :xml($!xml-ManagedSystem));
-    $!IsClassicHMCManagement                        = self.etl-text(:TAG<IsClassicHMCManagement>,                       :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementWithoutMaster              = self.etl-text(:TAG<IsPowerVMManagementWithoutMaster>,             :xml($!xml-ManagedSystem));
-    $!IsManagementPartitionPowerVMManagementMaster  = self.etl-text(:TAG<IsManagementPartitionPowerVMManagementMaster>, :xml($!xml-ManagedSystem));
-    $!IsHMCPowerVMManagementMaster                  = self.etl-text(:TAG<IsHMCPowerVMManagementMaster>,                 :xml($!xml-ManagedSystem));
-    $!IsNotPowerVMManagementMaster                  = self.etl-text(:TAG<IsNotPowerVMManagementMaster>,                 :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementNormalMaster               = self.etl-text(:TAG<IsPowerVMManagementNormalMaster>,              :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementPersistentMaster           = self.etl-text(:TAG<IsPowerVMManagementPersistentMaster>,          :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementTemporaryMaster            = self.etl-text(:TAG<IsPowerVMManagementTemporaryMaster>,           :xml($!xml-ManagedSystem));
-    $!IsPowerVMManagementPartitionEnabled           = self.etl-text(:TAG<IsPowerVMManagementPartitionEnabled>,          :xml($!xml-ManagedSystem));
-    $!SystemType                                    = self.etl-text(:TAG<SystemType>,                                   :xml($!xml-ManagedSystem));
-    $!ProcessorThrottling                           = self.etl-text(:TAG<ProcessorThrottling>,                          :xml($!xml-ManagedSystem));
-    $!xml                                           = Nil;
-    $!loaded                                        = True;
-    self.config.diag.post:                          sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'LOAD', sprintf("%.3f", now - $load-start)) if %*ENV<HIPH_LOAD>;
+    return self                                         if $!initialized;
+    self.config.diag.post:                              self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    my $init-start                                      = now;
+    $xml-content                                        = self.etl-branch(:TAG<content>,                                :$!xml);
+    $xml-ManagedSystem                                  = self.etl-branch(:TAG<ManagedSystem:ManagedSystem>,            :xml($xml-content));
+    $!atom                                              = self.etl-atom(:xml(self.etl-branch(:TAG<Metadata>,            :xml($xml-ManagedSystem))))                                                 if self.attribute-is-accessed(self.^name, 'atom');
+    $!id                                                = self.etl-text(:TAG<id>,                                       :$!xml);
+    $!published                                         = DateTime.new(self.etl-text(:TAG<published>,                   :$!xml))                                                                    if self.attribute-is-accessed(self.^name, 'published');
+    $!ActivatedLevel                                    = self.etl-text(:TAG<ActivatedLevel>,                           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ActivatedLevel');
+    if self.attribute-is-accessed(self.^name, 'AssociatedIPLConfiguration') {
+        my $xml-AssociatedIPLConfiguration              = self.etl-branch(:TAG<AssociatedIPLConfiguration>,             :xml($xml-ManagedSystem));
+        $!AssociatedIPLConfiguration                    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration.new(:$!config, :xml($xml-AssociatedIPLConfiguration));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedLogicalPartitions') {
+        my $xml-AssociatedLogicalPartitions             = self.etl-branch(:TAG<AssociatedLogicalPartitions>,            :xml($xml-ManagedSystem));
+        @!AssociatedLogicalPartitions                   = self.etl-links-URIs(                                          :xml($xml-AssociatedLogicalPartitions));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemCapabilities') {
+        my $xml-AssociatedSystemCapabilities            = self.etl-branch(:TAG<AssociatedSystemCapabilities>,           :xml($xml-ManagedSystem));
+        $!AssociatedSystemCapabilities                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities.new(:$!config, :xml($xml-AssociatedSystemCapabilities));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemIOConfiguration') {
+        my $xml-AssociatedSystemIOConfiguration         = self.etl-branch(:TAG<AssociatedSystemIOConfiguration>,        :xml($xml-ManagedSystem));
+        $!AssociatedSystemIOConfiguration               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration.new(:$!config, :xml($xml-AssociatedSystemIOConfiguration));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemMemoryConfiguration') {
+        my $xml-AssociatedSystemMemoryConfiguration     = self.etl-branch(:TAG<AssociatedSystemMemoryConfiguration>,    :xml($xml-ManagedSystem));
+        $!AssociatedSystemMemoryConfiguration           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemMemoryConfiguration.new(:$!config, :xml($xml-AssociatedSystemMemoryConfiguration));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemProcessorConfiguration') {
+        my $xml-AssociatedSystemProcessorConfiguration  = self.etl-branch(:TAG<AssociatedSystemProcessorConfiguration>, :xml($xml-ManagedSystem));
+        $!AssociatedSystemProcessorConfiguration        = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemProcessorConfiguration.new(:$!config, :xml($xml-AssociatedSystemProcessorConfiguration));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemSecurity') {
+        my $xml-AssociatedSystemSecurity                = self.etl-branch(:TAG<AssociatedSystemSecurity>,               :xml($xml-ManagedSystem));
+        $!AssociatedSystemSecurity                      = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemSecurity.new(:$!config, :xml($xml-AssociatedSystemSecurity));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedVirtualIOServers') {
+        my $xml-AssociatedVirtualIOServers              = self.etl-branch(:TAG<AssociatedVirtualIOServers>,             :xml($xml-ManagedSystem));
+        @!AssociatedVirtualIOServers                    = self.etl-links-URIs(                                          :xml($xml-AssociatedVirtualIOServers));
+    }
+    $!DetailedState                                     = self.etl-text(:TAG<DetailedState>,                            :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'DetailedState');
+    if self.attribute-is-accessed(self.^name, 'MachineTypeModelAndSerialNumber') {
+        my $xml-MachineTypeModelAndSerialNumber         = self.etl-branch(:TAG<MachineTypeModelAndSerialNumber>,        :xml($xml-ManagedSystem));
+        $!MachineTypeModelAndSerialNumber               = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::MachineTypeModelAndSerialNumber.new(:$!config, :xml($xml-MachineTypeModelAndSerialNumber));
+    }
+    $!ManufacturingDefaultConfigurationEnabled          = self.etl-text(:TAG<ManufacturingDefaultConfigurationEnabled>, :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ManufacturingDefaultConfigurationEnabled');
+    $!MaximumPartitions                                 = self.etl-text(:TAG<MaximumPartitions>,                        :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumPartitions');
+    $!MaximumPowerControlPartitions                     = self.etl-text(:TAG<MaximumPowerControlPartitions>,            :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumPowerControlPartitions');
+    $!MaximumRemoteRestartPartitions                    = self.etl-text(:TAG<MaximumRemoteRestartPartitions>,           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumRemoteRestartPartitions');
+    $!MaximumSharedProcessorCapablePartitionID          = self.etl-text(:TAG<MaximumSharedProcessorCapablePartitionID>, :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumSharedProcessorCapablePartitionID');
+    $!MaximumSuspendablePartitions                      = self.etl-text(:TAG<MaximumSuspendablePartitions>,             :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumSuspendablePartitions');
+    $!MaximumBackingDevicesPerVNIC                      = self.etl-text(:TAG<MaximumBackingDevicesPerVNIC>,             :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MaximumBackingDevicesPerVNIC');
+    $!PhysicalSystemAttentionLEDState                   = self.etl-text(:TAG<PhysicalSystemAttentionLEDState>,          :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'PhysicalSystemAttentionLEDState');
+    $!PrimaryIPAddress                                  = self.etl-text(:TAG<PrimaryIPAddress>,                         :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'PrimaryIPAddress');
+    $!Hostname                                          = self.etl-text(:TAG<Hostname>,                                 :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'Hostname');
+    $!ServiceProcessorFailoverEnabled                   = self.etl-text(:TAG<ServiceProcessorFailoverEnabled>,          :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ServiceProcessorFailoverEnabled');
+    $!ServiceProcessorFailoverReason                    = self.etl-text(:TAG<ServiceProcessorFailoverReason>,           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ServiceProcessorFailoverReason');
+    $!ServiceProcessorFailoverState                     = self.etl-text(:TAG<ServiceProcessorFailoverState>,            :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ServiceProcessorFailoverState');
+    $!ServiceProcessorVersion                           = self.etl-text(:TAG<ServiceProcessorVersion>,                  :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ServiceProcessorVersion');
+    $!State                                             = self.etl-text(:TAG<State>,                                    :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'State');
+    $!SystemName                                        = self.etl-text(:TAG<SystemName>,                               :xml($xml-ManagedSystem));
+    $!SystemTime                                        = DateTime.new(self.etl-text(:TAG<SystemTime>,                  :xml($xml-ManagedSystem)).subst(/^(\d**10)(\d**3)$/, {$0 ~ '.' ~ $1}).Num)  if self.attribute-is-accessed(self.^name, 'SystemTime');
+    $!VirtualSystemAttentionLEDState                    = self.etl-text(:TAG<VirtualSystemAttentionLEDState>,           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'VirtualSystemAttentionLEDState');
+    if self.attribute-is-accessed(self.^name, 'SystemMigrationInformation') {
+        my $xml-SystemMigrationInformation              = self.etl-branch(:TAG<SystemMigrationInformation>,             :xml($xml-ManagedSystem));
+        $!SystemMigrationInformation                    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation.new(:$!config, :xml($xml-SystemMigrationInformation));
+    }
+    $!ReferenceCode                                     = self.etl-text(:TAG<ReferenceCode>,                            :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ReferenceCode');
+    $!MergedReferenceCode                               = self.etl-text(:TAG<MergedReferenceCode>,                      :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'MergedReferenceCode');
+    $!SystemFirmware                                    = self.etl-text(:TAG<SystemFirmware>,                           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'SystemFirmware');
+    if self.attribute-is-accessed(self.^name, 'EnergyManagementConfiguration') {
+        my $xml-EnergyManagementConfiguration           = self.etl-branch(:TAG<EnergyManagementConfiguration>,          :xml($xml-ManagedSystem));
+        $!EnergyManagementConfiguration                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration.new(:$!config, :xml($xml-EnergyManagementConfiguration));
+    }
+    $!IsPowerVMManagementMaster                         = self.etl-text(:TAG<IsPowerVMManagementMaster>,                    :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementMaster');
+    $!IsClassicHMCManagement                            = self.etl-text(:TAG<IsClassicHMCManagement>,                       :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsClassicHMCManagement');
+    $!IsPowerVMManagementWithoutMaster                  = self.etl-text(:TAG<IsPowerVMManagementWithoutMaster>,             :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementWithoutMaster');
+    $!IsManagementPartitionPowerVMManagementMaster      = self.etl-text(:TAG<IsManagementPartitionPowerVMManagementMaster>, :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsManagementPartitionPowerVMManagementMaster');
+    $!IsHMCPowerVMManagementMaster                      = self.etl-text(:TAG<IsHMCPowerVMManagementMaster>,                 :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsHMCPowerVMManagementMaster');
+    $!IsNotPowerVMManagementMaster                      = self.etl-text(:TAG<IsNotPowerVMManagementMaster>,                 :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsNotPowerVMManagementMaster');
+    $!IsPowerVMManagementNormalMaster                   = self.etl-text(:TAG<IsPowerVMManagementNormalMaster>,              :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementNormalMaster');
+    $!IsPowerVMManagementPersistentMaster               = self.etl-text(:TAG<IsPowerVMManagementPersistentMaster>,          :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementPersistentMaster');
+    $!IsPowerVMManagementTemporaryMaster                = self.etl-text(:TAG<IsPowerVMManagementTemporaryMaster>,           :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementTemporaryMaster');
+    $!IsPowerVMManagementPartitionEnabled               = self.etl-text(:TAG<IsPowerVMManagementPartitionEnabled>,          :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementPartitionEnabled');
+    $!SystemType                                        = self.etl-text(:TAG<SystemType>,                                   :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'SystemType');
+    $!ProcessorThrottling                               = self.etl-text(:TAG<ProcessorThrottling>,                          :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'ProcessorThrottling');
+    $!LogicalPartitions                                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id));
+    $!VirtualIOServers                                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id));
+    $!initialized                                       = True;
+    $!xml                                               = Nil;
+    self.config.diag.post:                              sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
     self;
 }
 

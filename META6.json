@@ -7,7 +7,6 @@
         "Hypervisor::IBM::POWER::HMC::REST::ETL",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers",
-        "LibXML",
         "URI"
   ],
     "description":  "IBM POWER HMC REST API - ManagedSystems",

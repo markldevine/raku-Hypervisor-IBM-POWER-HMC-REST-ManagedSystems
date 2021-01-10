@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+#use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems:api<1>:auth<Mark Devine (mark@markdevine.com)>
@@ -15,7 +16,6 @@ my      Bool                                                                $ana
 my      Lock                                                                $lock = Lock.new;
 
 has     Hypervisor::IBM::POWER::HMC::REST::Config                           $.config is required;
-has     Bool                                                                $.loaded = False;
 has     Bool                                                                $.initialized = False;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem    %.Managed-Systems;
 has     Str                                                                 @.Managed-Systems-Ids;
@@ -47,9 +47,11 @@ method init () {
     });
     self.etl-node-name-check    if $proceed-with-name-check;
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'FETCH', sprintf("%.3f", now - $fetch-start)) if %*ENV<HIPH_FETCH>;
+
     my $parse-start             = now;
     self.etl-parse-path(:$xml-path);
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'PARSE', sprintf("%.3f", now - $parse-start)) if %*ENV<HIPH_PARSE>;
+
     my @promises;
     for self.etl-branches(:TAG<entry>, :$!xml) -> $entry {
         my $Managed-System-Id = self.etl-text(:TAG<id>, :xml($entry));
@@ -71,38 +73,38 @@ method init () {
     }
     @!Managed-Systems-Names     = %!Managed-System-SystemName-to-Id.keys.sort;
     $!initialized               = True;
-    self.load                   if self.config.optimizations.init-load;
+#    self.load                   if self.config.optimizations.init-load;
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
     self;
 }
 
-method load () {
-    return self             if $!loaded;
-    self.init               unless $!initialized;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    my $load-start          = now;
-    my @promises;
-    for @!Managed-Systems-Ids -> $id {
-        @promises.push: start {
-            %!Managed-Systems{$id}.load;
-        }
-    }
-    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
-        die 'ManagedSystems.load: Not all promises were Kept!';
-    }
-    $!xml                   = Nil;
-    $!loaded                = True;
-    self.config.diag.post:  sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'LOAD', sprintf("%.3f", now - $load-start)) if %*ENV<HIPH_LOAD>;
-    self;
-}
+#method load () {
+#    return self             if $!loaded;
+#    self.init               unless $!initialized;
+#    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+#    my $load-start          = now;
+#    my @promises;
+#    for @!Managed-Systems-Ids -> $id {
+#        @promises.push: start {
+#            %!Managed-Systems{$id}.load;
+#        }
+#    }
+#    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
+#        die 'ManagedSystems.load: Not all promises were Kept!';
+#    }
+#    $!xml                   = Nil;
+#    $!loaded                = True;
+#    self.config.diag.post:  sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'LOAD', sprintf("%.3f", now - $load-start)) if %*ENV<HIPH_LOAD>;
+#    self;
+#}
 
 method Initialize-Logical-Partitions () {
     self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    self.load;
+#    self.load;
     my @promises;
     for self.Managed-Systems-Ids -> $Managed-Systems-Id {
         @promises.push: start {
-            self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
+#           self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
             self.Managed-System-by-Id($Managed-Systems-Id).LogicalPartitions.init;
         }
     }
@@ -113,11 +115,11 @@ method Initialize-Logical-Partitions () {
 
 method Initialize-Virtual-IO-Servers () {
     self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    self.load;
+#    self.load;
     my @promises;
     for self.Managed-Systems-Ids -> $Managed-Systems-Id {
         @promises.push: start {
-            self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
+#           self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
             self.Managed-System-by-Id($Managed-Systems-Id).VirtualIOServers.init;
         };
     }
