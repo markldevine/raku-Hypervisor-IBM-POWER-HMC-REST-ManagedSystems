@@ -29,7 +29,6 @@ my      Lock                                                                    
 
 has     Hypervisor::IBM::POWER::HMC::REST::Atom                                                                     $.atom                                          is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                   $.config is required;
-#has     Bool                                                                                                        $.loaded = False;
 has     Bool                                                                                                        $.initialized = False;
 
 has     Str                                                                                                         $.id;                                                                                       # used in parent class as part of instantiation
@@ -188,8 +187,8 @@ method init () {
     $!IsPowerVMManagementPartitionEnabled               = self.etl-text(:TAG<IsPowerVMManagementPartitionEnabled>,          :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'IsPowerVMManagementPartitionEnabled');
     $!SystemType                                        = self.etl-text(:TAG<SystemType>,                                   :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'SystemType');
     $!ProcessorThrottling                               = self.etl-text(:TAG<ProcessorThrottling>,                          :xml($xml-ManagedSystem))                                               if self.attribute-is-accessed(self.^name, 'ProcessorThrottling');
-    $!LogicalPartitions                                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id));
-    $!VirtualIOServers                                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id));
+    $!LogicalPartitions                                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id))              if self.attribute-is-accessed(self.^name, 'LogicalPartitions');
+    $!VirtualIOServers                                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id))               if self.attribute-is-accessed(self.^name, 'VirtualIOServers');
     $!initialized                                       = True;
     $!xml                                               = Nil;
     self.config.diag.post:                              sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
