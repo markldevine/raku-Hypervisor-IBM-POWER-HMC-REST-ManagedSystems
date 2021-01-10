@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOAdapters;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses;
@@ -14,21 +15,19 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                                                                                                                $names-checked = False;
-my      Bool                                                                                                                                $analyzed = False;
-my      Lock                                                                                                                                $lock = Lock.new;
-
-has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                           $.config is required;
-has     Bool                                                                                                                                $.initialized = False;
-has     Bool                                                                                                                                $.loaded = False;
-has     Str                                                                                                                                 $.AvailableWWPNs;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOAdapters                       $.IOAdapters;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses                          $.IOBuses;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots                          $.IOSlots;
-has     Str                                                                                                                                 $.MaximumIOPools;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters                    $.SRIOVAdapters;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::AssociatedSystemVirtualNetwork   $.AssociatedSystemVirtualNetwork;
-has     Str                                                                                                                                 $.WWPNPrefix;
+my      Bool                                                                                                                                $names-checked  = False;
+my      Bool                                                                                                                                $analyzed       = False;
+my      Lock                                                                                                                                $lock           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                                           $.config        is required;
+has     Bool                                                                                                                                $.initialized   = False;
+has     Str                                                                                                                                 $.AvailableWWPNs                    is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOAdapters                       $.IOAdapters                        is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses                          $.IOBuses                           is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots                          $.IOSlots                           is conditional-initialization-attribute;
+has     Str                                                                                                                                 $.MaximumIOPools                    is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters                    $.SRIOVAdapters                     is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::AssociatedSystemVirtualNetwork   $.AssociatedSystemVirtualNetwork    is conditional-initialization-attribute;
+has     Str                                                                                                                                 $.WWPNPrefix                        is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -47,31 +46,28 @@ submethod TWEAK {
 }
 
 method init () {
-    return self                         if $!initialized;
-    self.config.diag.post:              self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!IOAdapters                        = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOAdapters.new(:$!config, :xml(self.etl-branch(:TAG<IOAdapters>, :$!xml)));
-    $!IOBuses                           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses.new(:$!config, :xml(self.etl-branch(:TAG<IOBuses>, :$!xml)));
-    $!IOSlots                           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots.new(:$!config, :xml(self.etl-branch(:TAG<IOSlots>, :$!xml)));
-    $!SRIOVAdapters                     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters.new(:$!config, :xml(self.etl-branch(:TAG<SRIOVAdapters>, :$!xml)));
-    $!AssociatedSystemVirtualNetwork    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::AssociatedSystemVirtualNetwork.new(:$!config, :xml(self.etl-branch(:TAG<AssociatedSystemVirtualNetwork>, :$!xml)));
-    self.load                           if self.config.optimizations.init-load;
-    $!initialized                       = True;
-    self;
-}
-
-method load () {
-    return self             if $!loaded;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!IOAdapters.load;
-    $!IOBuses.load;
-    $!IOSlots.load;
-    $!SRIOVAdapters.load;
-    $!AssociatedSystemVirtualNetwork.load;
-    $!AvailableWWPNs        = self.etl-text(:TAG<AvailableWWPNs>,   :$!xml);
-    $!MaximumIOPools        = self.etl-text(:TAG<MaximumIOPools>,   :$!xml);
-    $!WWPNPrefix            = self.etl-text(:TAG<WWPNPrefix>,       :$!xml);
-    $!xml                   = Nil;
-    $!loaded                = True;
+    return self                             if $!initialized;
+    self.config.diag.post:                  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    $!AvailableWWPNs                        = self.etl-text(:TAG<AvailableWWPNs>,   :$!xml) if self.attribute-is-accessed(self.^name, 'AvailableWWPNs');
+    if self.attribute-is-accessed(self.^name, 'IOAdapters') {
+        $!IOAdapters                        = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOAdapters.new(:$!config, :xml(self.etl-branch(:TAG<IOAdapters>, :$!xml)));
+    }
+    if self.attribute-is-accessed(self.^name, 'IOBuses') {
+        $!IOBuses                           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOBuses.new(:$!config, :xml(self.etl-branch(:TAG<IOBuses>, :$!xml)));
+    }
+    if self.attribute-is-accessed(self.^name, 'IOSlots') {
+        $!IOSlots                           = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::IOSlots.new(:$!config, :xml(self.etl-branch(:TAG<IOSlots>, :$!xml)));
+    }
+    $!MaximumIOPools                        = self.etl-text(:TAG<MaximumIOPools>,   :$!xml) if self.attribute-is-accessed(self.^name, 'MaximumIOPools');
+    if self.attribute-is-accessed(self.^name, 'SRIOVAdapters') {
+        $!SRIOVAdapters                     = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters.new(:$!config, :xml(self.etl-branch(:TAG<SRIOVAdapters>, :$!xml)));
+    }
+    if self.attribute-is-accessed(self.^name, 'AssociatedSystemVirtualNetwork') {
+        $!AssociatedSystemVirtualNetwork    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::AssociatedSystemVirtualNetwork.new(:$!config, :xml(self.etl-branch(:TAG<AssociatedSystemVirtualNetwork>, :$!xml)));
+    }
+    $!WWPNPrefix                            = self.etl-text(:TAG<WWPNPrefix>,       :$!xml) if self.attribute-is-accessed(self.^name, 'WWPNPrefix');
+    $!xml                                   = Nil;
+    $!initialized                           = True;
     self;
 }
 
