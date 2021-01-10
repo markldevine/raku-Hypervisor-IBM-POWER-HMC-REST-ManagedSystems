@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemSecurity:api<1>:auth<Mark Devine (mark@markdevine.com)>
             does Hypervisor::IBM::POWER::HMC::REST::Config::Analyze
@@ -9,18 +10,16 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                        $names-checked = False;
-my      Bool                                        $analyzed = False;
-my      Lock                                        $lock = Lock.new;
-
-has     Hypervisor::IBM::POWER::HMC::REST::Config   $.config is required;
-has     Bool                                        $.initialized = False;
-has     Bool                                        $.loaded = False;
-has     Str                                         $.VirtualTrustedPlatformModuleKeyLength;
-has     Str                                         $.VirtualTrustedPlatformModuleKeyStatus;
-has     Str                                         $.VirtualTrustedPlatformModuleVersion;
-has     Str                                         $.MaximumSupportedVirtualTrustedPlatformModulePartitions;
-has     Str                                         $.AvailableVirtualTrustedPlatformModulePartitions;
+my      Bool                                        $names-checked  = False;
+my      Bool                                        $analyzed       = False;
+my      Lock                                        $lock           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config   $.config        is required;
+has     Bool                                        $.initialized   = False;
+has     Str                                         $.VirtualTrustedPlatformModuleKeyLength                     is conditional-initialization-attribute;
+has     Str                                         $.VirtualTrustedPlatformModuleKeyStatus                     is conditional-initialization-attribute;
+has     Str                                         $.VirtualTrustedPlatformModuleVersion                       is conditional-initialization-attribute;
+has     Str                                         $.MaximumSupportedVirtualTrustedPlatformModulePartitions    is conditional-initialization-attribute;
+has     Str                                         $.AvailableVirtualTrustedPlatformModulePartitions           is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -39,23 +38,15 @@ submethod TWEAK {
 }
 
 method init () {
-    return self             if $!initialized;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    self.load               if self.config.optimizations.init-load;
-    $!initialized           = True;
-    self;
-}
-
-method load () {
-    return self                                                 if $!loaded;
+    return self                                                 if $!initialized;
     self.config.diag.post:                                      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!VirtualTrustedPlatformModuleKeyLength                     = self.etl-text(:TAG<VirtualTrustedPlatformModuleKeyLength>,                    :$!xml);
-    $!VirtualTrustedPlatformModuleKeyStatus                     = self.etl-text(:TAG<VirtualTrustedPlatformModuleKeyStatus>,                    :$!xml);
-    $!VirtualTrustedPlatformModuleVersion                       = self.etl-text(:TAG<VirtualTrustedPlatformModuleVersion>,                      :$!xml);
-    $!MaximumSupportedVirtualTrustedPlatformModulePartitions    = self.etl-text(:TAG<MaximumSupportedVirtualTrustedPlatformModulePartitions>,   :$!xml);
-    $!AvailableVirtualTrustedPlatformModulePartitions           = self.etl-text(:TAG<AvailableVirtualTrustedPlatformModulePartitions>,          :$!xml);
+    $!VirtualTrustedPlatformModuleKeyLength                     = self.etl-text(:TAG<VirtualTrustedPlatformModuleKeyLength>,                    :$!xml) if self.attribute-is-accessed(self.^name, 'VirtualTrustedPlatformModuleKeyLength');
+    $!VirtualTrustedPlatformModuleKeyStatus                     = self.etl-text(:TAG<VirtualTrustedPlatformModuleKeyStatus>,                    :$!xml) if self.attribute-is-accessed(self.^name, 'VirtualTrustedPlatformModuleKeyStatus');
+    $!VirtualTrustedPlatformModuleVersion                       = self.etl-text(:TAG<VirtualTrustedPlatformModuleVersion>,                      :$!xml) if self.attribute-is-accessed(self.^name, 'VirtualTrustedPlatformModuleVersion');
+    $!MaximumSupportedVirtualTrustedPlatformModulePartitions    = self.etl-text(:TAG<MaximumSupportedVirtualTrustedPlatformModulePartitions>,   :$!xml) if self.attribute-is-accessed(self.^name, 'MaximumSupportedVirtualTrustedPlatformModulePartitions');
+    $!AvailableVirtualTrustedPlatformModulePartitions           = self.etl-text(:TAG<AvailableVirtualTrustedPlatformModulePartitions>,          :$!xml) if self.attribute-is-accessed(self.^name, 'AvailableVirtualTrustedPlatformModulePartitions');
     $!xml                                                       = Nil;
-    $!loaded                                                    = True;
+    $!initialized                                               = True;
     self;
 }
 
