@@ -104,8 +104,8 @@ method init () {
     return self                                         if $!initialized;
     self.config.diag.post:                              self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     my $init-start                                      = now;
-    $xml-content                                        = self.etl-branch(:TAG<content>,                                :$!xml);
-    $xml-ManagedSystem                                  = self.etl-branch(:TAG<ManagedSystem:ManagedSystem>,            :xml($xml-content));
+    my $xml-content                                     = self.etl-branch(:TAG<content>,                                :$!xml);
+    my $xml-ManagedSystem                               = self.etl-branch(:TAG<ManagedSystem:ManagedSystem>,            :xml($xml-content));
     $!atom                                              = self.etl-atom(:xml(self.etl-branch(:TAG<Metadata>,            :xml($xml-ManagedSystem))))                                                 if self.attribute-is-accessed(self.^name, 'atom');
     $!id                                                = self.etl-text(:TAG<id>,                                       :$!xml);
     $!published                                         = DateTime.new(self.etl-text(:TAG<published>,                   :$!xml))                                                                    if self.attribute-is-accessed(self.^name, 'published');
