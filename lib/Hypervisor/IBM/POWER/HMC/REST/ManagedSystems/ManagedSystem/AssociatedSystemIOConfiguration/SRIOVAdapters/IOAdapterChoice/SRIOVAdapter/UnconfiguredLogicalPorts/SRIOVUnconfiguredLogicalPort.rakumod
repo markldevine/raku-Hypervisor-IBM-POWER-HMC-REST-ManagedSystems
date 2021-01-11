@@ -2,6 +2,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
+use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemIOConfiguration::SRIOVAdapters::IOAdapterChoice::SRIOVAdapter::UnconfiguredLogicalPorts::SRIOVUnconfiguredLogicalPort:api<1>:auth<Mark Devine (mark@markdevine.com)>
             does Hypervisor::IBM::POWER::HMC::REST::Config::Analyze
@@ -9,16 +10,14 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                        $names-checked = False;
-my      Bool                                        $analyzed = False;
-my      Lock                                        $lock = Lock.new;
-
-has     Hypervisor::IBM::POWER::HMC::REST::Config   $.config is required;
-has     Bool                                        $.initialized = False;
-has     Bool                                        $.loaded = False;
-has     Str                                         $.DynamicReconfigurationConnectorIndex;
-has     Str                                         $.DynamicReconfigurationConnectorName;
-has     Str                                         $.LocationCode;
+my      Bool                                        $names-checked  = False;
+my      Bool                                        $analyzed       = False;
+my      Lock                                        $lock           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config   $.config        is required;
+has     Bool                                        $.initialized   = False;
+has     Str                                         $.DynamicReconfigurationConnectorIndex  is conditional-initialization-attribute;
+has     Str                                         $.DynamicReconfigurationConnectorName   is conditional-initialization-attribute;
+has     Str                                         $.LocationCode                          is conditional-initialization-attribute;
 
 method  xml-name-exceptions () { return set <Metadata>; }
 
@@ -37,21 +36,13 @@ submethod TWEAK {
 }
 
 method init () {
-    return self             if $!initialized;
-    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    self.load               if self.config.optimizations.init-load;
-    $!initialized           = True;
-    self;
-}
-
-method load () {
-    return self                             if $!loaded;
+    return self                             if $!initialized;
     self.config.diag.post:                  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    $!DynamicReconfigurationConnectorIndex  = self.etl-text(:TAG<DynamicReconfigurationConnectorIndex>, :$!xml);
-    $!DynamicReconfigurationConnectorName   = self.etl-text(:TAG<DynamicReconfigurationConnectorName>,  :$!xml);
-    $!LocationCode                          = self.etl-text(:TAG<LocationCode>,                         :$!xml);
+    $!DynamicReconfigurationConnectorIndex  = self.etl-text(:TAG<DynamicReconfigurationConnectorIndex>, :$!xml) if self.attribute-is-accessed(self.^name, 'DynamicReconfigurationConnectorIndex');
+    $!DynamicReconfigurationConnectorName   = self.etl-text(:TAG<DynamicReconfigurationConnectorName>,  :$!xml) if self.attribute-is-accessed(self.^name, 'DynamicReconfigurationConnectorName');
+    $!LocationCode                          = self.etl-text(:TAG<LocationCode>,                         :$!xml) if self.attribute-is-accessed(self.^name, 'LocationCode');
     $!xml                                   = Nil;
-    $!loaded                                = True;
+    $!initialized                           = True;
     self;
 }
 
