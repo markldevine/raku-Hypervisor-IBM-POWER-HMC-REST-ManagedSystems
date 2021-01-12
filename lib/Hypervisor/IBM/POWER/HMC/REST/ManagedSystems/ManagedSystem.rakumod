@@ -23,14 +23,12 @@ unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem:a
             does Hypervisor::IBM::POWER::HMC::REST::Config::Optimize
             does Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 
-my      Bool                                                                                                        $names-checked = False;
-my      Bool                                                                                                        $analyzed = False;
-my      Lock                                                                                                        $lock = Lock.new;
-
+my      Bool                                                                                                        $names-checked                                  = False;
+my      Bool                                                                                                        $analyzed                                       = False;
+my      Lock                                                                                                        $lock                                           = Lock.new;
+has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                   $.config                                        is required;
+has     Bool                                                                                                        $.initialized                                   = False;
 has     Hypervisor::IBM::POWER::HMC::REST::Atom                                                                     $.atom                                          is conditional-initialization-attribute;
-has     Hypervisor::IBM::POWER::HMC::REST::Config                                                                   $.config is required;
-has     Bool                                                                                                        $.initialized = False;
-
 has     Str                                                                                                         $.id;                                                                                       # used in parent class as part of instantiation
 has     DateTime                                                                                                    $.published                                     is conditional-initialization-attribute;
 has     Str                                                                                                         $.ActivatedLevel                                is conditional-initialization-attribute;
