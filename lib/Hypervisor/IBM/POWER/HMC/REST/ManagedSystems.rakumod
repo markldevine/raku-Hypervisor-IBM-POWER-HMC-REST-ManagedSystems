@@ -2,7 +2,6 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
-use     Hypervisor::IBM::POWER::HMC::REST::Config::Traits;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems:api<1>:auth<Mark Devine (mark@markdevine.com)>
@@ -16,7 +15,7 @@ my      Bool                                                                $ana
 my      Lock                                                                $lock           = Lock.new;
 has     Hypervisor::IBM::POWER::HMC::REST::Config                           $.config        is required;
 has     Bool                                                                $.initialized   = False;
-has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem    %.Managed-Systems   is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem    %.Managed-Systems;
 has     Str                                                                 @.Managed-Systems-Ids;
 has     Str                                                                 @.Managed-Systems-Names;
 has                                                                         %.Managed-System-SystemName-to-Id;
@@ -36,7 +35,6 @@ submethod TWEAK {
 
 method init () {
     return self                 if $!initialized;
-    return self                 unless self.attribute-is-accessed(self.^name, 'Managed-Systems');
     self.config.diag.post:      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     my $init-start              = now;
     my $fetch-start             = now;
@@ -73,10 +71,50 @@ method init () {
     }
     @!Managed-Systems-Names     = %!Managed-System-SystemName-to-Id.keys.sort;
     $!initialized               = True;
-#    self.load                   if self.config.optimizations.init-load;
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'INITIALIZE', sprintf("%.3f", now - $init-start)) if %*ENV<HIPH_INIT>;
     self;
 }
+
+method Initialize-Logical-Partitions () {
+    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    my @promises;
+    for self.Managed-Systems-Ids -> $Managed-Systems-Id {
+        @promises.push: start {
+            self.Managed-System-by-Id($Managed-Systems-Id).LogicalPartitions.init;
+        }
+    }
+    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
+        die 'ManagedSystems: Not all LogicalPartition initialization promises were Kept!';
+    }
+}
+
+method Initialize-Virtual-IO-Servers () {
+    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    my @promises;
+    for self.Managed-Systems-Ids -> $Managed-Systems-Id {
+        @promises.push: start {
+            self.Managed-System-by-Id($Managed-Systems-Id).VirtualIOServers.init;
+        };
+    }
+    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
+        die &?ROUTINE.name ~ ': Not all VirtualIOServer initialization promises were Kept!';
+    }
+}
+
+method Managed-System-by-Id (Str:D $id is required) {
+    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    return %!Managed-Systems{$id} if %!Managed-Systems{$id}:exists;
+    die 'Unknown Managed System Id <' ~ $id ~ '>';
+}
+
+method Managed-System-by-SystemName (Str:D $SystemName is required) {
+    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
+    die 'Unknown Managed SystemName <' ~ $SystemName ~ '>' unless %!Managed-System-SystemName-to-Id{$SystemName}:exists;
+    my $id = %!Managed-System-SystemName-to-Id{$SystemName};
+    self.Managed-System-by-Id($id);
+}
+
+=finish
 
 #method load () {
 #    return self             if $!loaded;
@@ -98,47 +136,3 @@ method init () {
 #    self;
 #}
 
-method Initialize-Logical-Partitions () {
-    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-#    self.load;
-    my @promises;
-    for self.Managed-Systems-Ids -> $Managed-Systems-Id {
-        @promises.push: start {
-#           self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
-            self.Managed-System-by-Id($Managed-Systems-Id).LogicalPartitions.init;
-        }
-    }
-    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
-        die 'ManagedSystems: Not all LogicalPartition initialization promises were Kept!';
-    }
-}
-
-method Initialize-Virtual-IO-Servers () {
-    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-#    self.load;
-    my @promises;
-    for self.Managed-Systems-Ids -> $Managed-Systems-Id {
-        @promises.push: start {
-#           self.Managed-System-by-Id($Managed-Systems-Id).load unless self.Managed-System-by-Id($Managed-Systems-Id).loaded;
-            self.Managed-System-by-Id($Managed-Systems-Id).VirtualIOServers.init;
-        };
-    }
-    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
-        die &?ROUTINE.name ~ ': Not all LogicalPartition initialization promises were Kept!';
-    }
-}
-
-method Managed-System-by-Id (Str:D $id is required) {
-    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    return %!Managed-Systems{$id} if %!Managed-Systems{$id}:exists;
-    die 'Unknown Managed System Id <' ~ $id ~ '>';
-}
-
-method Managed-System-by-SystemName (Str:D $SystemName is required) {
-    self.config.diag.post: self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-    die 'Unknown Managed SystemName <' ~ $SystemName ~ '>' unless %!Managed-System-SystemName-to-Id{$SystemName}:exists;
-    my $id = %!Managed-System-SystemName-to-Id{$SystemName};
-    self.Managed-System-by-Id($id);
-}
-
-=finish
