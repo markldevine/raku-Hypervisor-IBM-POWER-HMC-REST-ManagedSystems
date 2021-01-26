@@ -3,6 +3,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::Config::Analyze;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Dump;
 need    Hypervisor::IBM::POWER::HMC::REST::Config::Optimize;
 need    Hypervisor::IBM::POWER::HMC::REST::ETL::XML;
+need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem;
 unit    class Hypervisor::IBM::POWER::HMC::REST::ManagedSystems:api<1>:auth<Mark Devine (mark@markdevine.com)>
             does Hypervisor::IBM::POWER::HMC::REST::Config::Analyze
@@ -20,6 +21,7 @@ has     Str                                                                 @.Ma
 has     Str                                                                 @.Managed-Systems-Names;
 has                                                                         %.Managed-System-SystemName-to-Id;
 has                                                                         %.Managed-System-Id-to-SystemName;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM              $.PCM;
 
 method  xml-name-exceptions () { return set (); }
 
@@ -114,25 +116,8 @@ method Managed-System-by-SystemName (Str:D $SystemName is required) {
     self.Managed-System-by-Id($id);
 }
 
+method PCM () {
+    my $!PCM = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM.new(:Managed-System-Names(%!Managed-System-SystemName-to-Id));
+}
+
 =finish
-
-#method load () {
-#    return self             if $!loaded;
-#    self.init               unless $!initialized;
-#    self.config.diag.post:  self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
-#    my $load-start          = now;
-#    my @promises;
-#    for @!Managed-Systems-Ids -> $id {
-#        @promises.push: start {
-#            %!Managed-Systems{$id}.load;
-#        }
-#    }
-#    unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
-#        die 'ManagedSystems.load: Not all promises were Kept!';
-#    }
-#    $!xml                   = Nil;
-#    $!loaded                = True;
-#    self.config.diag.post:  sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'LOAD', sprintf("%.3f", now - $load-start)) if %*ENV<HIPH_LOAD>;
-#    self;
-#}
-
