@@ -118,7 +118,6 @@ method Managed-System-by-SystemName (Str:D $SystemName is required) {
 
 method Initialize-PCM () {
     $!PCM = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM.new(:$!config, :Managed-System-Names(%!Managed-System-SystemName-to-Id));
-    $!PCM.init;
 }
 
 =finish
