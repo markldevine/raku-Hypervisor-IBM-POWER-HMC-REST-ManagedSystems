@@ -6,8 +6,8 @@
         "Hypervisor::IBM::POWER::HMC::REST::Config",
         "Hypervisor::IBM::POWER::HMC::REST::ETL",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions",
-        "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::PCM",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers",
+        "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM",
         "URI"
   ],
     "description":  "IBM POWER HMC REST API - ManagedSystems",
