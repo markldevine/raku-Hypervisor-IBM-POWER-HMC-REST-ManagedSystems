@@ -56,6 +56,7 @@
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::DynamicPowerSavingTunables": "lib/Hypervisor/IBM/POWER/HMC/REST/ManagedSystems/ManagedSystem/EnergyManagementConfiguration/DynamicPowerSavingTunables.rakumod",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration::IdlePowerSavingTunables": "lib/Hypervisor/IBM/POWER/HMC/REST/ManagedSystems/ManagedSystem/EnergyManagementConfiguration/IdlePowerSavingTunables.rakumod",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::MachineTypeModelAndSerialNumber": "lib/Hypervisor/IBM/POWER/HMC/REST/ManagedSystems/ManagedSystem/MachineTypeModelAndSerialNumber.rakumod",
+        "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SupportedHardwareAcceleratorTypes": "lib/Hypervisor/IBM/POWER/HMC/REST/ManagedSystems/ManagedSystem/SupportedHardwareAcceleratorTypes.rakumod",
         "Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation": "lib/Hypervisor/IBM/POWER/HMC/REST/ManagedSystems/ManagedSystem/SystemMigrationInformation.rakumod"
     },
     "resources":    [],
