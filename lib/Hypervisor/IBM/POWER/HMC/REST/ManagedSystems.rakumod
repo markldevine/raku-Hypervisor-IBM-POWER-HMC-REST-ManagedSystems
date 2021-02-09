@@ -39,6 +39,7 @@ method init () {
     return self                 if $!initialized;
     self.config.diag.post:      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_METHOD>;
     my $init-start              = now;
+
     my $fetch-start             = now;
     my $xml-path                = self.config.session-manager.fetch('/rest/api/uom/ManagedSystem');
     my $proceed-with-name-check = False;
