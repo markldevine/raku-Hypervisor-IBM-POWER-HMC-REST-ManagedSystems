@@ -80,18 +80,15 @@ has     Str                                                                     
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions                         $.LogicalPartitions                             is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers                          $.VirtualIOServers                              is conditional-initialization-attribute;
 
-method  xml-name-exceptions () { return set <Metadata author content etag:etag link title>; }
+method  xml-name-exceptions () { return set <Metadata>; }
 
 submethod TWEAK {
     self.config.diag.post:      self.^name ~ '::' ~ &?ROUTINE.name if %*ENV<HIPH_SUBMETHOD>;
     self.config.diag.post:      sprintf("%-20s %10s: %11s", self.^name.subst(/^.+'::'(.+)$/, {$0}), 'START', 't' ~ $*THREAD.id) if %*ENV<HIPH_THREAD_START>;
-    my $proceed-with-name-check = False;
     my $proceed-with-analyze    = False;
     $lock.protect({
         if !$analyzed           { $proceed-with-analyze    = True; $analyzed      = True; }
-        if !$names-checked      { $proceed-with-name-check = True; $names-checked = True; }
     });
-    self.etl-node-name-check    if $proceed-with-name-check;
     self.init;
     self.analyze                if $proceed-with-analyze;
     self;
@@ -103,6 +100,13 @@ method init () {
     my $init-start                                      = now;
     my $xml-content                                     = self.etl-branch(:TAG<content>,                                :$!xml);
     my $xml-ManagedSystem                               = self.etl-branch(:TAG<ManagedSystem:ManagedSystem>,            :xml($xml-content));
+
+    my $proceed-with-name-check                         = False;
+    $lock.protect({
+        if !$names-checked                              { $proceed-with-name-check = True; $names-checked = True; }
+    });
+    self.etl-node-name-check(:xml($xml-ManagedSystem))  if $proceed-with-name-check;
+
     $!atom                                              = self.etl-atom(:xml(self.etl-branch(:TAG<Metadata>,            :xml($xml-ManagedSystem))))                                                 if self.attribute-is-accessed(self.^name, 'atom');
     $!id                                                = self.etl-text(:TAG<id>,                                       :$!xml);
     $!published                                         = DateTime.new(self.etl-text(:TAG<published>,                   :$!xml))                                                                    if self.attribute-is-accessed(self.^name, 'published');
