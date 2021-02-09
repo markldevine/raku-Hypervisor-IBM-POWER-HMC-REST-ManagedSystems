@@ -32,6 +32,7 @@ has     Hypervisor::IBM::POWER::HMC::REST::Atom                                 
 has     Str                                                                                                         $.id;                                                                                       # used in parent class as part of instantiation
 has     DateTime                                                                                                    $.published                                     is conditional-initialization-attribute;
 has     Str                                                                                                         $.ActivatedLevel                                is conditional-initialization-attribute;
+has     Str                                                                                                         $.ActivatedServicePackNameAndLevel              is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration                $.AssociatedIPLConfiguration                    is conditional-initialization-attribute;
 has     URI                                                                                                         @.AssociatedLogicalPartitions                   is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedSystemCapabilities              $.AssociatedSystemCapabilities                  is conditional-initialization-attribute;
@@ -111,6 +112,7 @@ method init () {
     $!id                                                = self.etl-text(:TAG<id>,                                       :$!xml);
     $!published                                         = DateTime.new(self.etl-text(:TAG<published>,                   :$!xml))                                                                    if self.attribute-is-accessed(self.^name, 'published');
     $!ActivatedLevel                                    = self.etl-text(:TAG<ActivatedLevel>,                           :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ActivatedLevel');
+    $!ActivatedServicePackNameAndLevel                  = self.etl-text(:TAG<ActivatedServicePackNameAndLevel>,         :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ActivatedServicePackNameAndLevel');
     if self.attribute-is-accessed(self.^name, 'AssociatedIPLConfiguration') {
         my $xml-AssociatedIPLConfiguration              = self.etl-branch(:TAG<AssociatedIPLConfiguration>,             :xml($xml-ManagedSystem));
         $!AssociatedIPLConfiguration                    = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedIPLConfiguration.new(:$!config, :xml($xml-AssociatedIPLConfiguration));
