@@ -62,7 +62,7 @@ method init () {
         }
     }
     unless await Promise.allof(@promises).then({ so all(@promises>>.result) }) {
-        die 'ManagedSystems.init: Not all promises were Kept!';
+        die self.^name ~ '::' ~ &?ROUTINE.name ~ ': Not all promises were Kept!';
     }
     for @promises -> $promise {
         my $result = $promise.result;
@@ -118,7 +118,7 @@ method Managed-System-by-SystemName (Str:D $SystemName is required) {
 }
 
 method Initialize-PCM () {
-    $!PCM = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM.new(:$!config, :Managed-System-Names(%!Managed-System-SystemName-to-Id));
+    $!PCM = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::PCM.new(:$!config, :%!Managed-System-SystemName-to-Id);
 }
 
 =finish
