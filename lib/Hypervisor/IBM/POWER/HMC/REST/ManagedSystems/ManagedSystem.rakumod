@@ -15,6 +15,7 @@ need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::Machin
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SystemMigrationInformation;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::EnergyManagementConfiguration;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SupportedHardwareAcceleratorTypes;
+need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedPersistentMemoryConfiguration;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions;
 need    Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers;
 use     URI;
@@ -78,8 +79,13 @@ has     Str                                                                     
 has     Str                                                                                                         $.IsPowerVMManagementTemporaryMaster            is conditional-initialization-attribute;
 has     Str                                                                                                         $.IsPowerVMManagementPartitionEnabled           is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SupportedHardwareAcceleratorTypes         $.SupportedHardwareAcceleratorTypes             is conditional-initialization-attribute;
+has     Str                                                                                                         $.CurrentStealableProcUnits                     is conditional-initialization-attribute;
+has     Str                                                                                                         $.CurrentStealableMemory                        is conditional-initialization-attribute;
+has     Str                                                                                                         $.Description                                   is conditional-initialization-attribute;
+has     Str                                                                                                         $.SystemLocation                                is conditional-initialization-attribute;
 has     Str                                                                                                         $.SystemType                                    is conditional-initialization-attribute;
 has     Str                                                                                                         $.ProcessorThrottling                           is conditional-initialization-attribute;
+has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedPersistentMemoryConfiguration   $.AssociatedPersistentMemoryConfiguration       is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions                         $.LogicalPartitions                             is conditional-initialization-attribute;
 has     Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers                          $.VirtualIOServers                              is conditional-initialization-attribute;
 
@@ -195,8 +201,16 @@ method init () {
         my $xml-SupportedHardwareAcceleratorTypes       = self.etl-branch(:TAG<SupportedHardwareAcceleratorTypes>,          :xml($xml-ManagedSystem));
         $!SupportedHardwareAcceleratorTypes             = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::SupportedHardwareAcceleratorTypes.new(:$!config, :xml($xml-SupportedHardwareAcceleratorTypes));
     }
+    $!CurrentStealableProcUnits                         = self.etl-text(:TAG<CurrentStealableProcUnits>,                    :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'CurrentStealableProcUnits');
+    $!CurrentStealableMemory                            = self.etl-text(:TAG<CurrentStealableMemory>,                       :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'CurrentStealableMemory');
+    $!Description                                       = self.etl-text(:TAG<Description>,                                  :xml($xml-ManagedSystem), :optional)                                        if self.attribute-is-accessed(self.^name, 'Description');
+    $!SystemLocation                                    = self.etl-text(:TAG<SystemLocation>,                               :xml($xml-ManagedSystem), :optional)                                        if self.attribute-is-accessed(self.^name, 'SystemLocation');
     $!SystemType                                        = self.etl-text(:TAG<SystemType>,                                   :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'SystemType');
     $!ProcessorThrottling                               = self.etl-text(:TAG<ProcessorThrottling>,                          :xml($xml-ManagedSystem))                                                   if self.attribute-is-accessed(self.^name, 'ProcessorThrottling');
+    if self.attribute-is-accessed(self.^name, 'AssociatedPersistentMemoryConfiguration') {
+        my $xml-AssociatedPersistentMemoryConfiguration = self.etl-branch(:TAG<AssociatedPersistentMemoryConfiguration>,    :xml($xml-ManagedSystem));
+        $!AssociatedPersistentMemoryConfiguration       = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::AssociatedPersistentMemoryConfiguration.new(:$!config, :xml($xml-AssociatedPersistentMemoryConfiguration));
+    }
     $!LogicalPartitions                                 = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::LogicalPartitions.new(:$!config, :Managed-System-Id($!id))                  if self.attribute-is-accessed(self.^name, 'LogicalPartitions');
     $!VirtualIOServers                                  = Hypervisor::IBM::POWER::HMC::REST::ManagedSystems::ManagedSystem::VirtualIOServers.new(:$!config, :Managed-System-Id($!id))                   if self.attribute-is-accessed(self.^name, 'VirtualIOServers');
     $!initialized                                       = True;
