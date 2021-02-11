@@ -13,13 +13,7 @@ $mc.ManagedSystems.init;
 #$mc.ManagedSystems.Initialize-Virtual-IO-Servers;
 $mc.ManagedSystems.Initialize-PCM;
 
-say 'MaximumManagedSystemsForLongTermMonitor    = ' ~ $mc.ManagedSystems.PCM.MaximumManagedSystemsForLongTermMonitor;
-say 'MaximumManagedSystemsForComputeLTM         = ' ~ $mc.ManagedSystems.PCM.MaximumManagedSystemsForComputeLTM;
-say 'MaximumManagedSystemsForAggregation        = ' ~ $mc.ManagedSystems.PCM.MaximumManagedSystemsForAggregation;
-say 'MaximumManagedSystemsForShortTermMonitor   = ' ~ $mc.ManagedSystems.PCM.MaximumManagedSystemsForShortTermMonitor;
-say 'MaximumManagedSystemsForEnergyMonitor      = ' ~ $mc.ManagedSystems.PCM.MaximumManagedSystemsForEnergyMonitor;
-say 'AggregatedMetricsStorageDuration           = ' ~ $mc.ManagedSystems.PCM.AggregatedMetricsStorageDuration;
-
+$mc.ManagedSystems.PCM.dump;
 
 #$mc.dump;
 
